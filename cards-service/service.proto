@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package cards_service;
+
+message Deck {
+   uint64 id = 1;
+   string title = 2;
+   repeated Card cards = 3;
+}
+
+message Card {
+   uint64 id = 1;
+   string title = 2;
+}
+
+message Empty {}
+
+service CardProvider {
+   rpc Create(Card) returns (Card) {}
+   rpc Delete(Card) returns (Empty) {}
+}
