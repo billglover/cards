@@ -11,11 +11,29 @@ import (
 	"google.golang.org/grpc"
 )
 
-type csServer struct{}
+type csServer struct {
+	mysql *cs.DB
+}
 
 func (s *csServer) Create(ctx context.Context, c *cs.Card) (*cs.Card, error) {
 	log.Printf("creating card: %s\n", c)
-	c.Title = "Demo Card"
+
+	tx, err := s.mysql.Begin()
+	if err != nil {
+		log.Fatal(err)
+		return nil, err
+	}
+	err = tx.CreateCard(c)
+	if err != nil {
+		log.Fatal(err)
+		return nil, err
+	}
+	err = tx.Commit()
+	if err != nil {
+		log.Fatal(err)
+		return nil, err
+	}
+
 	log.Printf("created card: %s\n", c)
 	return c, nil
 }
@@ -36,8 +54,19 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
+
+	// Demo a DB connection
+	db, err := cs.Open("root@/CardsService?charset=utf8")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	srv := newServer()
+	srv.mysql = db
+
 	var opts []grpc.ServerOption
 	grpcServer := grpc.NewServer(opts...)
-	cs.RegisterCardProviderServer(grpcServer, newServer())
+	cs.RegisterCardProviderServer(grpcServer, srv)
 	grpcServer.Serve(lis)
 }

@@ -38,6 +38,6 @@ func main() {
 	defer conn.Close()
 	client := cs.NewCardProviderClient(conn)
 
-	createCard(client, &cs.Card{Id: 1})
+	createCard(client, &cs.Card{Title: "demo card"})
 	deleteCard(client, &cs.Card{Id: 1})
 }
