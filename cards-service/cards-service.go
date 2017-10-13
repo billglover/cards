@@ -3,7 +3,6 @@ package cards_service
 import (
 	"database/sql"
 	"errors"
-	"log"
 
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -35,22 +34,21 @@ func (db *DB) Begin() (*Tx, error) {
 
 // CreateCard creates a new user.
 // Returns an error if user is invalid or the tx fails.
-func (tx *Tx) CreateCard(c *Card) error {
+func (tx *Tx) CreateCard(c *Card) (int64, error) {
 	// Validate the input.
 	if c == nil {
-		return errors.New("card required")
+		return 0, errors.New("card required")
 	} else if c.Title == "" {
-		return errors.New("card.Title required")
+		return 0, errors.New("card.Title required")
 	}
 
 	// Perform the actual insert and return any errors.
 	//return tx.Exec(`INSERT INTO users (...) VALUES`, ...)
 	stmt, err := tx.Prepare("INSERT cards SET title=?")
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	res, err := stmt.Exec(c.Title)
-	log.Println(res)
-	return err
+	return res.LastInsertId()
 }

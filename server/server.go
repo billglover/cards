@@ -23,7 +23,7 @@ func (s *csServer) Create(ctx context.Context, c *cs.Card) (*cs.Card, error) {
 		log.Fatal(err)
 		return nil, err
 	}
-	err = tx.CreateCard(c)
+	uid, err := tx.CreateCard(c)
 	if err != nil {
 		log.Fatal(err)
 		return nil, err
@@ -33,6 +33,8 @@ func (s *csServer) Create(ctx context.Context, c *cs.Card) (*cs.Card, error) {
 		log.Fatal(err)
 		return nil, err
 	}
+
+	c.Id = uint64(uid)
 
 	log.Printf("created card: %s\n", c)
 	return c, nil
