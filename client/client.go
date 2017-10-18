@@ -10,22 +10,24 @@ import (
 	"google.golang.org/grpc"
 )
 
+// createCard creates a card in the cards service
 func createCard(client cs.CardProviderClient, c *cs.Card) {
-	log.Printf("creating card: %s\n", c)
 	card, err := client.Create(context.Background(), c)
 	if err != nil {
-		log.Printf("%v.GetFeatures(_) = _, %v: \n", client, err)
+		log.Printf("creating card: {%+v} %s\n", card, "FAILED")
+		log.Printf("unable to create card: %v", grpc.ErrorDesc(err))
 	}
-	log.Printf("created card: %s\n", card)
+	log.Printf("creating card: {%+v} %s\n", card, "SUCCESS")
 }
 
+// deleteCard removes a card from the cards service
 func deleteCard(client cs.CardProviderClient, c *cs.Card) {
-	log.Printf("deleting card: %s\n", c)
 	_, err := client.Delete(context.Background(), c)
 	if err != nil {
-		log.Printf("%v.GetFeatures(_) = _, %v: \n", client, err)
+		log.Printf("deleting card: {%+v} %s\n", c, "FAILED")
+		log.Printf("unable to delete card: %v", grpc.ErrorDesc(err))
 	}
-	log.Printf("deleted card: %s\n", c)
+	log.Printf("deleting card: {%+v} %s\n", c, "SUCCESS")
 }
 
 func main() {

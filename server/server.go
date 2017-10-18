@@ -9,60 +9,78 @@ import (
 
 	cs "github.com/billglover/cards/cards-service"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 )
 
+// csServer represents a cards service server. It holds references to the
+// databases used to store cards and decks.
 type csServer struct {
 	mysql *cs.DB
 }
 
+// Create creates an instance of a card in the database. It returns the
+// card that has been created or an error.
 func (s *csServer) Create(ctx context.Context, c *cs.Card) (*cs.Card, error) {
-	log.Printf("creating card: %s\n", c)
 
 	tx, err := s.mysql.Begin()
 	if err != nil {
-		log.Fatal(err)
 		return nil, err
 	}
+
 	uid, err := tx.CreateCard(c)
 	if err != nil {
-		log.Fatal(err)
-		return nil, err
+		log.Println(err)
+		tx.Rollback()
+		return nil, grpc.Errorf(codes.Unknown, err.Error())
 	}
+
 	err = tx.Commit()
 	if err != nil {
-		log.Fatal(err)
-		return nil, err
+		log.Println(err)
+		return nil, grpc.Errorf(codes.Unknown, err.Error())
 	}
 
 	c.Id = uint64(uid)
 
-	log.Printf("created card: %s\n", c)
+	log.Printf("created card: %+v\n", c)
 	return c, nil
 }
 
+// Delete removes an instance of a card from the database. It returns an
+// empty response or an error.
 func (s *csServer) Delete(ctx context.Context, c *cs.Card) (*cs.Empty, error) {
-	log.Printf("deleting card: %s\n", c)
 
 	tx, err := s.mysql.Begin()
 	if err != nil {
-		log.Fatal(err)
-		return nil, err
-	}
-	_, err = tx.DeleteCard(c)
-	if err != nil {
-		log.Fatal(err)
-		return nil, err
-	}
-	err = tx.Commit()
-	if err != nil {
-		log.Fatal(err)
-		return nil, err
+		log.Println(err)
+		return nil, grpc.Errorf(codes.Unknown, err.Error())
 	}
 
-	log.Printf("deleted card: %s\n", c)
+	rows, err := tx.DeleteCard(c)
+	if err != nil {
+		log.Println(err)
+		tx.Rollback()
+		return nil, grpc.Errorf(codes.Unknown, err.Error())
+	}
+
+	if rows != 1 {
+		log.Printf("unable to delete card: unexpected rows impacted %d (want 1)\n", rows)
+		tx.Rollback()
+		return nil, grpc.Errorf(codes.NotFound, "card not found")
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		log.Println(err)
+		return nil, grpc.Errorf(codes.Unknown, err.Error())
+	}
+
+	log.Printf("deleted card: %+v\n", c)
 	return &cs.Empty{}, nil
 }
 
+// newServer is a helper method that returns a new instance of the cards
+// service server.
 func newServer() *csServer {
 	s := new(csServer)
 	return s
@@ -74,7 +92,6 @@ func main() {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
-	// Demo a DB connection
 	db, err := cs.Open("root@/CardsService?charset=utf8")
 	if err != nil {
 		log.Fatal(err)
