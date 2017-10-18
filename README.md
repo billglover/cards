@@ -1,11 +1,12 @@
 # cards
+
 A collection of cards and stacks
 
 ## Development notes
 
 ### MySQL
 
-```
+```plain
 We've installed your MySQL database without a root password. To secure it run:
     mysql_secure_installation
 
@@ -22,7 +23,7 @@ Or, if you don't want/need a background service you can just run:
 
 ### Postgres
 
-```
+```plain
 If builds of PostgreSQL 9 are failing and you have version 8.x installed,
 you may need to remove the previous version first. See:
   https://github.com/Homebrew/legacy-homebrew/issues/2510
@@ -40,4 +41,4 @@ To have launchd start postgresql now and restart at login:
   brew services start postgresql
 Or, if you don't want/need a background service you can just run:
   pg_ctl -D /usr/local/var/postgres start
-  ```
+```
