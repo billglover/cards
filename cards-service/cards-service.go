@@ -32,18 +32,16 @@ func (db *DB) Begin() (*Tx, error) {
 	return &Tx{tx}, nil
 }
 
-// CreateCard creates a new user.
-// Returns an error if user is invalid or the tx fails.
+// CreateCard creates a new card.
+// Returns the id of the card that was created or an error if the tx fails.
 func (tx *Tx) CreateCard(c *Card) (int64, error) {
-	// Validate the input.
+
 	if c == nil {
 		return 0, errors.New("card required")
 	} else if c.Title == "" {
 		return 0, errors.New("card.Title required")
 	}
 
-	// Perform the actual insert and return any errors.
-	//return tx.Exec(`INSERT INTO users (...) VALUES`, ...)
 	stmt, err := tx.Prepare("INSERT cards SET title=?")
 	if err != nil {
 		return 0, err
@@ -51,4 +49,23 @@ func (tx *Tx) CreateCard(c *Card) (int64, error) {
 
 	res, err := stmt.Exec(c.Title)
 	return res.LastInsertId()
+}
+
+// DeleteCard creates a new card.
+// Returns the number of records deleted or an error if the tx fails.
+func (tx *Tx) DeleteCard(c *Card) (int64, error) {
+
+	if c == nil {
+		return 0, errors.New("card required")
+	} else if c.Id == 0 {
+		return 0, errors.New("card.Id required")
+	}
+
+	stmt, err := tx.Prepare("DELETE FROM cards WHERE uid=?")
+	if err != nil {
+		return 0, err
+	}
+
+	res, err := stmt.Exec(c.Id)
+	return res.RowsAffected()
 }

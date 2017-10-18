@@ -42,6 +42,23 @@ func (s *csServer) Create(ctx context.Context, c *cs.Card) (*cs.Card, error) {
 
 func (s *csServer) Delete(ctx context.Context, c *cs.Card) (*cs.Empty, error) {
 	log.Printf("deleting card: %s\n", c)
+
+	tx, err := s.mysql.Begin()
+	if err != nil {
+		log.Fatal(err)
+		return nil, err
+	}
+	_, err = tx.DeleteCard(c)
+	if err != nil {
+		log.Fatal(err)
+		return nil, err
+	}
+	err = tx.Commit()
+	if err != nil {
+		log.Fatal(err)
+		return nil, err
+	}
+
 	log.Printf("deleted card: %s\n", c)
 	return &cs.Empty{}, nil
 }

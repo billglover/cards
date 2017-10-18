@@ -40,4 +40,5 @@ func main() {
 
 	createCard(client, &cs.Card{Title: "demo card"})
 	deleteCard(client, &cs.Card{Id: 1})
+	createCard(client, &cs.Card{Title: "demo card"})
 }
