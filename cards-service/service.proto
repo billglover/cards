@@ -2,15 +2,15 @@ syntax = "proto3";
 
 package cards_service;
 
-message Deck {
+message Card {
    uint64 id = 1;
    string title = 2;
    repeated Card cards = 3;
 }
 
-message Card {
-   uint64 id = 1;
-   string title = 2;
+message Pairing {
+   Card parent = 1;
+   Card child = 2;
 }
 
 message Empty {}
@@ -18,4 +18,6 @@ message Empty {}
 service CardProvider {
    rpc Create(Card) returns (Card) {}
    rpc Delete(Card) returns (Empty) {}
+   rpc Embed(Pairing) returns (Pairing) {}
+   rpc Remove(Pairing) returns (Empty) {}
 }

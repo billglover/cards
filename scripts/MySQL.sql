@@ -6,10 +6,11 @@ CREATE TABLE `cards` (
    PRIMARY KEY (`uid`)
 );
 
-DROP TABLE IF EXISTS `decks`;
+DROP TABLE IF EXISTS `links`;
 
-CREATE TABLE `decks` (
+CREATE TABLE `links` (
    `uid` SERIAL,
-   `title` VARCHAR(64) NULL DEFAULT NULL,
+   `parent` BIGINT UNSIGNED NOT NULL,
+   `child` BIGINT UNSIGNED NOT NULL,
    PRIMARY KEY (`uid`)
 );

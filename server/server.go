@@ -79,6 +79,46 @@ func (s *csServer) Delete(ctx context.Context, c *cs.Card) (*cs.Empty, error) {
 	return &cs.Empty{}, nil
 }
 
+// Embed embeds one card inside another. It returns a copy of the pairing
+// if successfully created or an error if embeding was unsuccessful.
+func (s *csServer) Embed(ctx context.Context, p *cs.Pairing) (*cs.Pairing, error) {
+
+	tx, err := s.mysql.Begin()
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := tx.EmbedCard(p.Parent, p.Child)
+	if err != nil {
+		log.Println(err)
+		tx.Rollback()
+		return nil, grpc.Errorf(codes.Unknown, err.Error())
+	}
+
+	if rows != 1 {
+		log.Printf("unable to embed cards: unexpected rows impacted %d (want 1)\n", rows)
+		tx.Rollback()
+		return nil, grpc.Errorf(codes.NotFound, "embedding failed")
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		log.Println(err)
+		return nil, grpc.Errorf(codes.Unknown, err.Error())
+	}
+
+	log.Printf("embeded cards: %+v\n", p)
+
+	return p, nil
+}
+
+// Remove removes one card from inside another. It returns an empty response
+// if pairing is succesfully removed or an error if removal was unsuccessful.
+func (s *csServer) Remove(ctx context.Context, p *cs.Pairing) (*cs.Empty, error) {
+
+	return &cs.Empty{}, nil
+}
+
 // newServer is a helper method that returns a new instance of the cards
 // service server.
 func newServer() *csServer {

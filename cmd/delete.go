@@ -48,6 +48,7 @@ func deleteCard(c *cs.Card) error {
 	if err != nil {
 		log.Printf("deleting card: {%+v} %s\n", c, "FAILED")
 		log.Printf("unable to delete card: %v", grpc.ErrorDesc(err))
+		return nil
 	}
 	log.Printf("deleting card: {%+v} %s\n", c, "SUCCESS")
 

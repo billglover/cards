@@ -4,6 +4,12 @@ A collection of cards and stacks
 
 ## Development notes
 
+### gRPC
+
+```plain
+protoc -I cards-service/ cards-service/service.proto --go_out=plugins=grpc:cards-service
+```
+
 ### MySQL
 
 ```plain

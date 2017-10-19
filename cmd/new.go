@@ -42,6 +42,7 @@ func createCard(t string) error {
 	if err != nil {
 		log.Printf("creating card: {%+v} %s\n", card, "FAILED")
 		log.Printf("unable to create card: %v", grpc.ErrorDesc(err))
+		return nil
 	}
 	log.Printf("creating card: {%+v} %s\n", card, "SUCCESS")
 

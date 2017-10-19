@@ -69,3 +69,22 @@ func (tx *Tx) DeleteCard(c *Card) (int64, error) {
 	res, err := stmt.Exec(c.Id)
 	return res.RowsAffected()
 }
+
+// EmbedCard embeds one card inside another.
+// Returns the number of records ammended or an error if the tx fails.
+func (tx *Tx) EmbedCard(p, c *Card) (int64, error) {
+
+	if p == nil || c == nil {
+		return 0, errors.New("parent and child cards required")
+	} else if p.Id == 0 || c.Id == 0 {
+		return 0, errors.New("parent.Id and child.Id are both required")
+	}
+
+	stmt, err := tx.Prepare("INSERT links SET parent=?, child=?")
+	if err != nil {
+		return 0, err
+	}
+
+	res, err := stmt.Exec(p.Id, c.Id)
+	return res.RowsAffected()
+}
