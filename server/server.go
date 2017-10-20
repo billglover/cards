@@ -116,6 +116,32 @@ func (s *csServer) Embed(ctx context.Context, p *cs.Pairing) (*cs.Pairing, error
 // if pairing is succesfully removed or an error if removal was unsuccessful.
 func (s *csServer) Remove(ctx context.Context, p *cs.Pairing) (*cs.Empty, error) {
 
+	tx, err := s.mysql.Begin()
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := tx.RemoveCard(p.Parent, p.Child)
+	if err != nil {
+		log.Println(err)
+		tx.Rollback()
+		return nil, grpc.Errorf(codes.Unknown, err.Error())
+	}
+
+	if rows != 1 {
+		log.Printf("unable to remove cards: unexpected rows impacted %d (want 1)\n", rows)
+		tx.Rollback()
+		return nil, grpc.Errorf(codes.NotFound, "remove failed")
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		log.Println(err)
+		return nil, grpc.Errorf(codes.Unknown, err.Error())
+	}
+
+	log.Printf("remove cards: %+v\n", p)
+
 	return &cs.Empty{}, nil
 }
 
