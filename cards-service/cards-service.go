@@ -107,3 +107,48 @@ func (tx *Tx) RemoveCard(p, c *Card) (int64, error) {
 	res, err := stmt.Exec(p.Id, c.Id)
 	return res.RowsAffected()
 }
+
+// GetCard returns a card based on its identifier.
+// Returns the card or an error if the tx fails.
+func (tx *Tx) GetCard(c *Card) (*Card, error) {
+
+	if c == nil {
+		return c, errors.New("card required")
+	} else if c.Id == 0 {
+		return c, errors.New("card.Id required")
+	}
+
+	stmt, err := tx.Prepare("SELECT uid, title FROM cards WHERE uid=?")
+	if err != nil {
+		return c, err
+	}
+
+	row := stmt.QueryRow(c.Id)
+
+	var uid int
+	var title string
+	err = row.Scan(&uid, &title)
+	if err != nil {
+		return c, err
+	}
+	c.Id = uint64(uid)
+	c.Title = title
+
+	stmt, err = tx.Prepare("SELECT child FROM links WHERE parent=?")
+	if err != nil {
+		return c, err
+	}
+
+	rows, err := stmt.Query(c.Id)
+	if err != nil {
+		return c, err
+	}
+
+	for rows.Next() {
+		rows.Scan(&uid)
+		c.Cards = append(c.Cards, &Card{Id: uint64(uid)})
+	}
+	rows.Close()
+
+	return c, nil
+}

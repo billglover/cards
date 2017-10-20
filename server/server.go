@@ -145,6 +145,32 @@ func (s *csServer) Remove(ctx context.Context, p *cs.Pairing) (*cs.Empty, error)
 	return &cs.Empty{}, nil
 }
 
+// Get returns a card by querying based on its id. It returns a card or an error.
+func (s *csServer) Get(ctx context.Context, c *cs.Card) (*cs.Card, error) {
+
+	tx, err := s.mysql.Begin()
+	if err != nil {
+		return nil, err
+	}
+
+	card, err := tx.GetCard(c)
+	if err != nil {
+		log.Println(err)
+		tx.Rollback()
+		return nil, grpc.Errorf(codes.Unknown, err.Error())
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		log.Println(err)
+		return nil, grpc.Errorf(codes.Unknown, err.Error())
+	}
+
+	log.Printf("returned card: %+v\n", card)
+
+	return card, nil
+}
+
 // newServer is a helper method that returns a new instance of the cards
 // service server.
 func newServer() *csServer {

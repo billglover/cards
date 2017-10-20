@@ -20,4 +20,5 @@ service CardProvider {
    rpc Delete(Card) returns (Empty) {}
    rpc Embed(Pairing) returns (Pairing) {}
    rpc Remove(Pairing) returns (Empty) {}
+   rpc Get(Card) returns (Card) {}
 }
