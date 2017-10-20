@@ -51,6 +51,7 @@ func getCard(c *cs.Card) error {
 		return nil
 	}
 	log.Printf("get card: {%+v} %s\n", card, "SUCCESS")
+	fmt.Println(card.Display())
 
 	return nil
 }
