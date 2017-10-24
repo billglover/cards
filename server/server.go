@@ -80,7 +80,7 @@ func (s *csServer) Delete(ctx context.Context, c *cs.Card) (*cs.Empty, error) {
 }
 
 // Embed embeds one card inside another. It returns a copy of the pairing
-// if successfully created or an error if embeding was unsuccessful.
+// if successfully created or an error if embedding was unsuccessful.
 func (s *csServer) Embed(ctx context.Context, p *cs.Pairing) (*cs.Pairing, error) {
 
 	tx, err := s.mysql.Begin()
@@ -107,13 +107,13 @@ func (s *csServer) Embed(ctx context.Context, p *cs.Pairing) (*cs.Pairing, error
 		return nil, grpc.Errorf(codes.Unknown, err.Error())
 	}
 
-	log.Printf("embeded cards: %+v\n", p)
+	log.Printf("embedded cards: %+v\n", p)
 
 	return p, nil
 }
 
 // Remove removes one card from inside another. It returns an empty response
-// if pairing is succesfully removed or an error if removal was unsuccessful.
+// if pairing is successfully removed or an error if removal was unsuccessful.
 func (s *csServer) Remove(ctx context.Context, p *cs.Pairing) (*cs.Empty, error) {
 
 	tx, err := s.mysql.Begin()
@@ -184,7 +184,8 @@ func main() {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
-	db, err := cs.Open("root@/CardsService?charset=utf8")
+	// db, err := cs.Open("root@/CardsService?charset=utf8")
+	db, err := cs.Open("mongodb://127.0.0.1:27017")
 	if err != nil {
 		log.Fatal(err)
 	}
