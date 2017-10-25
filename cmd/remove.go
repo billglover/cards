@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"strconv"
 
 	cs "github.com/billglover/cards/cards-service"
 	"github.com/spf13/cobra"
@@ -21,22 +20,12 @@ var removeCmd = &cobra.Command{
 	Long:  `Remove one card from within another.`,
 	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
-
-		pID, err := strconv.Atoi(args[0])
-		if err != nil {
-			log.Println("parent identifier should be a number")
-			return
-		}
-
-		cID, err := strconv.Atoi(args[1])
-		if err != nil {
-			log.Println("child identifier should be a number")
-			return
-		}
+		pID := args[0]
+		cID := args[1]
 
 		pairing := &cs.Pairing{
-			Parent: &cs.Card{Id: uint64(pID)},
-			Child:  &cs.Card{Id: uint64(cID)},
+			Parent: &cs.Card{Id: pID},
+			Child:  &cs.Card{Id: cID},
 		}
 		removeCard(pairing)
 	},

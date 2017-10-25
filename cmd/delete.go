@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"strconv"
 
 	cs "github.com/billglover/cards/cards-service"
 	"github.com/spf13/cobra"
@@ -21,13 +20,8 @@ var deleteCmd = &cobra.Command{
 	Long:  `Delete a card by providing its id.`,
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-
-		i, err := strconv.Atoi(args[0])
-		if err != nil {
-			log.Println("card identifier should be a number")
-			return
-		}
-		card := &cs.Card{Id: uint64(i)}
+		id := args[0]
+		card := &cs.Card{Id: id}
 		deleteCard(card)
 	},
 }

@@ -40,7 +40,7 @@ func (s *csServer) Create(ctx context.Context, c *cs.Card) (*cs.Card, error) {
 		return nil, grpc.Errorf(codes.Unknown, err.Error())
 	}
 
-	c.Id = uint64(uid)
+	c.Id = uid
 
 	log.Printf("created card: %+v\n", c)
 	return c, nil
