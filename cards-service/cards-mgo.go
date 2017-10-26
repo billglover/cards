@@ -51,7 +51,6 @@ func (tx *Tx) CreateCard(c *Card) (string, error) {
 		return "", nil
 	}
 
-	// TODO: this should return the ID of the card that has been created
 	return cDoc.UID.Hex(), err
 }
 
