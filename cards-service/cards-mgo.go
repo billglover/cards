@@ -59,7 +59,16 @@ func (tx *Tx) CreateCard(c *Card) (string, error) {
 // DeleteCard deletes a card based on its id.
 // Returns the number of records deleted or an error if the tx fails.
 func (tx *Tx) DeleteCard(c *Card) (int, error) {
-	return 0, nil
+
+	col := tx.DB("cards").C("cards")
+	id := bson.ObjectIdHex(c.Id)
+
+	err := col.RemoveId(id)
+	if err != nil {
+		return 0, err
+	}
+
+	return 1, nil
 }
 
 // EmbedCard embeds one card inside another.
