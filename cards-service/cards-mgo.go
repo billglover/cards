@@ -1,6 +1,8 @@
 package cards_service
 
 import (
+	"log"
+
 	"gopkg.in/mgo.v2/bson"
 
 	"gopkg.in/mgo.v2"
@@ -75,6 +77,22 @@ func (tx *Tx) RemoveCard(p, c *Card) (int, error) {
 // GetCard returns a card based on its identifier.
 // Returns the card or an error if the tx fails.
 func (tx *Tx) GetCard(c *Card) (*Card, error) {
+
+	col := tx.DB("cards").C("cards")
+	id := bson.ObjectIdHex(c.Id)
+
+	cDoc := &CardDoc{}
+
+	err := col.FindId(id).One(cDoc)
+	if err != nil {
+		return c, err
+	}
+
+	c.Title = cDoc.Title
+	log.Println(c)
+	for _, v := range cDoc.Cards {
+		c.Cards = append(c.Cards, &Card{Id: v.String()})
+	}
 	return c, nil
 }
 
