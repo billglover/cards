@@ -74,7 +74,25 @@ func (tx *Tx) DeleteCard(c *Card) (int, error) {
 // EmbedCard embeds one card inside another.
 // Returns the number of records amended or an error if the tx fails.
 func (tx *Tx) EmbedCard(p, c *Card) (int, error) {
-	return 0, nil
+	col := tx.DB("cards").C("cards")
+	cID := bson.ObjectIdHex(c.Id)
+	pID := bson.ObjectIdHex(p.Id)
+
+	log.Println(p)
+	log.Println(pID)
+	log.Println(c)
+	log.Println(cID)
+
+	change := bson.M{"$addToSet": bson.M{"cards": cID}}
+	log.Println(change)
+
+	err := col.UpdateId(pID, change)
+	if err != nil {
+		log.Println(err)
+		return 0, err
+	}
+
+	return 1, nil
 }
 
 // RemoveCard embeds one card inside another.
