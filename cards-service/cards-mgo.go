@@ -1,6 +1,7 @@
 package cards_service
 
 import (
+	fmt "fmt"
 	"log"
 
 	"gopkg.in/mgo.v2/bson"
@@ -59,6 +60,9 @@ func (tx *Tx) CreateCard(c *Card) (string, error) {
 // DeleteCard deletes a card based on its id.
 // Returns the number of records deleted or an error if the tx fails.
 func (tx *Tx) DeleteCard(c *Card) (int, error) {
+	if bson.IsObjectIdHex(c.Id) == false {
+		return 0, fmt.Errorf("invalid card identifier provided")
+	}
 
 	col := tx.DB("cards").C("cards")
 	id := bson.ObjectIdHex(c.Id)
@@ -74,6 +78,10 @@ func (tx *Tx) DeleteCard(c *Card) (int, error) {
 // EmbedCard embeds one card inside another.
 // Returns the number of records amended or an error if the tx fails.
 func (tx *Tx) EmbedCard(p, c *Card) (int, error) {
+	if bson.IsObjectIdHex(c.Id) && bson.IsObjectIdHex(p.Id) == false {
+		return 0, fmt.Errorf("invalid card identifier provided")
+	}
+
 	col := tx.DB("cards").C("cards")
 	cID := bson.ObjectIdHex(c.Id)
 	pID := bson.ObjectIdHex(p.Id)
@@ -91,6 +99,10 @@ func (tx *Tx) EmbedCard(p, c *Card) (int, error) {
 // RemoveCard embeds one card inside another.
 // Returns the number of records amended or an error if the tx fails.
 func (tx *Tx) RemoveCard(p, c *Card) (int, error) {
+	if bson.IsObjectIdHex(c.Id) && bson.IsObjectIdHex(p.Id) == false {
+		return 0, fmt.Errorf("invalid card identifier provided")
+	}
+
 	col := tx.DB("cards").C("cards")
 	cID := bson.ObjectIdHex(c.Id)
 	pID := bson.ObjectIdHex(p.Id)
@@ -108,6 +120,9 @@ func (tx *Tx) RemoveCard(p, c *Card) (int, error) {
 // GetCard returns a card based on its identifier.
 // Returns the card or an error if the tx fails.
 func (tx *Tx) GetCard(c *Card) (*Card, error) {
+	if bson.IsObjectIdHex(c.Id) == false {
+		return nil, fmt.Errorf("invalid card identifier provided")
+	}
 
 	col := tx.DB("cards").C("cards")
 	id := bson.ObjectIdHex(c.Id)
