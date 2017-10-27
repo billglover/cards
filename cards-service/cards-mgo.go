@@ -118,7 +118,7 @@ func (tx *Tx) GetCard(c *Card) (*Card, error) {
 	c.Title = cDoc.Title
 	log.Println(c)
 	for _, v := range cDoc.Cards {
-		c.Cards = append(c.Cards, &Card{Id: v.String()})
+		c.Cards = append(c.Cards, &Card{Id: v.Hex()})
 	}
 	return c, nil
 }
