@@ -7,16 +7,20 @@ import (
 
 	"golang.org/x/net/context"
 
-	mysql "github.com/billglover/cards/cards-mysql"
+	neo "github.com/billglover/cards/cards-neo"
+	//mysql "github.com/billglover/cards/cards-mysql"
+	//mgo "github.com/billglover/cards/cards-mgo"
 	cs "github.com/billglover/cards/cards-service"
+
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 )
 
 // csServer represents a cards service server. It holds references to the
 // databases used to store cards and decks.
+// TODO: use an interface here
 type csServer struct {
-	db *mysql.DB
+	db *neo.DB
 }
 
 // Create creates an instance of a card in the database. It returns the
@@ -41,7 +45,7 @@ func (s *csServer) Create(ctx context.Context, c *cs.Card) (*cs.Card, error) {
 		return nil, grpc.Errorf(codes.Unknown, err.Error())
 	}
 
-	c.Id = fmt.Sprintf("%d", uid)
+	c.Id = uid
 
 	log.Printf("created card: %+v\n", c)
 	return c, nil
@@ -185,8 +189,9 @@ func main() {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
-	db, err := mysql.Open("root@/CardsService?charset=utf8")
+	//db, err := mysql.Open("root@/CardsService?charset=utf8")
 	//db, err := mgo.Open("mongodb://127.0.0.1:27017")
+	db, err := neo.Open("http://neo4j:password@localhost:7474")
 	if err != nil {
 		log.Fatal(err)
 	}

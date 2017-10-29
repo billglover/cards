@@ -37,21 +37,26 @@ func (db *DB) Begin() (*Tx, error) {
 
 // CreateCard creates a new card.
 // Returns the id of the card that was created or an error if the tx fails.
-func (tx *Tx) CreateCard(c *cs.Card) (int64, error) {
+func (tx *Tx) CreateCard(c *cs.Card) (string, error) {
 
 	if c == nil {
-		return 0, errors.New("card required")
+		return "", errors.New("card required")
 	} else if c.Title == "" {
-		return 0, errors.New("card.Title required")
+		return "", errors.New("card.Title required")
 	}
 
 	stmt, err := tx.Prepare("INSERT cards SET title=?")
 	if err != nil {
-		return 0, err
+		return "", err
 	}
 
 	res, err := stmt.Exec(c.Title)
-	return res.LastInsertId()
+	if err != nil {
+		return "", err
+	}
+
+	id, err := res.LastInsertId()
+	return fmt.Sprintf("%d", id), err
 }
 
 // DeleteCard deletes a card based on its id.
