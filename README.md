@@ -48,3 +48,14 @@ To have launchd start postgresql now and restart at login:
 Or, if you don't want/need a background service you can just run:
   pg_ctl -D /usr/local/var/postgres start
 ```
+
+
+### Neo4j
+
+```plain
+docker run \
+    --publish=7474:7474 --publish=7687:7687 \
+    --volume=$HOME/neo4j/data:/data \
+    --volume=$HOME/neo4j/logs:/logs \
+    neo4j:3.0
+```

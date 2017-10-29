@@ -7,6 +7,7 @@ import (
 
 	"golang.org/x/net/context"
 
+	mysql "github.com/billglover/cards/cards-mysql"
 	cs "github.com/billglover/cards/cards-service"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -15,14 +16,14 @@ import (
 // csServer represents a cards service server. It holds references to the
 // databases used to store cards and decks.
 type csServer struct {
-	mysql *cs.DB
+	db *mysql.DB
 }
 
 // Create creates an instance of a card in the database. It returns the
 // card that has been created or an error.
 func (s *csServer) Create(ctx context.Context, c *cs.Card) (*cs.Card, error) {
 
-	tx, err := s.mysql.Begin()
+	tx, err := s.db.Begin()
 	if err != nil {
 		return nil, err
 	}
@@ -40,7 +41,7 @@ func (s *csServer) Create(ctx context.Context, c *cs.Card) (*cs.Card, error) {
 		return nil, grpc.Errorf(codes.Unknown, err.Error())
 	}
 
-	c.Id = uid
+	c.Id = fmt.Sprintf("%d", uid)
 
 	log.Printf("created card: %+v\n", c)
 	return c, nil
@@ -50,7 +51,7 @@ func (s *csServer) Create(ctx context.Context, c *cs.Card) (*cs.Card, error) {
 // empty response or an error.
 func (s *csServer) Delete(ctx context.Context, c *cs.Card) (*cs.Empty, error) {
 
-	tx, err := s.mysql.Begin()
+	tx, err := s.db.Begin()
 	if err != nil {
 		log.Println(err)
 		return nil, grpc.Errorf(codes.Unknown, err.Error())
@@ -83,7 +84,7 @@ func (s *csServer) Delete(ctx context.Context, c *cs.Card) (*cs.Empty, error) {
 // if successfully created or an error if embedding was unsuccessful.
 func (s *csServer) Embed(ctx context.Context, p *cs.Pairing) (*cs.Pairing, error) {
 
-	tx, err := s.mysql.Begin()
+	tx, err := s.db.Begin()
 	if err != nil {
 		return nil, err
 	}
@@ -116,7 +117,7 @@ func (s *csServer) Embed(ctx context.Context, p *cs.Pairing) (*cs.Pairing, error
 // if pairing is successfully removed or an error if removal was unsuccessful.
 func (s *csServer) Remove(ctx context.Context, p *cs.Pairing) (*cs.Empty, error) {
 
-	tx, err := s.mysql.Begin()
+	tx, err := s.db.Begin()
 	if err != nil {
 		return nil, err
 	}
@@ -148,7 +149,7 @@ func (s *csServer) Remove(ctx context.Context, p *cs.Pairing) (*cs.Empty, error)
 // Get returns a card by querying based on its id. It returns a card or an error.
 func (s *csServer) Get(ctx context.Context, c *cs.Card) (*cs.Card, error) {
 
-	tx, err := s.mysql.Begin()
+	tx, err := s.db.Begin()
 	if err != nil {
 		return nil, err
 	}
@@ -184,15 +185,15 @@ func main() {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
-	// db, err := cs.Open("root@/CardsService?charset=utf8")
-	db, err := cs.Open("mongodb://127.0.0.1:27017")
+	db, err := mysql.Open("root@/CardsService?charset=utf8")
+	//db, err := mgo.Open("mongodb://127.0.0.1:27017")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer db.Close()
 
 	srv := newServer()
-	srv.mysql = db
+	srv.db = db
 
 	var opts []grpc.ServerOption
 	grpcServer := grpc.NewServer(opts...)
