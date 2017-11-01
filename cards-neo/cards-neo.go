@@ -4,9 +4,9 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"log"
 
 	cs "github.com/billglover/cards/cards-service"
+	"github.com/billglover/uid"
 
 	_ "gopkg.in/cq.v1"
 )
@@ -24,16 +24,12 @@ func Open(dataSourceName string) (*DB, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return &DB{db}, nil
 }
 
 // Begin starts an returns a new transaction.
 func (db *DB) Begin() (*Tx, error) {
-	// tx, err := db.DB.Begin()
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// return &Tx{tx}, nil
 	return &Tx{db.DB}, nil
 }
 
@@ -47,43 +43,44 @@ func (tx *Tx) CreateCard(c *cs.Card) (string, error) {
 		return "", errors.New("card.Title required")
 	}
 
-	stmt, err := tx.Prepare("CREATE (n:Card {title:{0}}) RETURN ID(n)")
+	stmt, err := tx.Prepare("CREATE (n:Card {uid: {0}, title:{1}}) RETURN n.uid")
 	if err != nil {
 		return "", err
 	}
 
-	row := stmt.QueryRow(c.Title)
+	uid, _ := uid.NextStringID()
+	row := stmt.QueryRow(uid, c.Title)
 
-	id := 0
+	id := ""
 	err = row.Scan(&id)
 	if err != nil {
 		return "", err
 	}
 
-	log.Println("last:", id)
-
-	return fmt.Sprintf("%d", id), err
+	return fmt.Sprintf("%s", id), err
 }
 
 // DeleteCard deletes a card based on its id.
 // Returns the number of records deleted or an error if the tx fails.
 func (tx *Tx) DeleteCard(c *cs.Card) (int64, error) {
 
-	// if c == nil {
-	// 	return 0, errors.New("card required")
-	// } else if c.Id == "" {
-	// 	return 0, errors.New("card.Id required")
-	// }
+	if c == nil {
+		return 0, errors.New("card required")
+	} else if c.Id == "" {
+		return 0, errors.New("card.Id required")
+	}
 
-	// stmt, err := tx.Prepare("DELETE FROM cards WHERE uid=?")
-	// if err != nil {
-	// 	return 0, err
-	// }
+	stmt, err := tx.Prepare("MATCH (n:Card {uid: {0}}) DETACH DELETE n")
+	if err != nil {
+		return 0, err
+	}
 
-	// res, err := stmt.Exec(c.Id)
-	// return res.RowsAffected()
+	res, err := stmt.Exec(c.Id)
+	if err != nil {
+		return 0, err
+	}
 
-	return 0, nil
+	return res.RowsAffected()
 }
 
 // EmbedCard embeds one card inside another.
