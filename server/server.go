@@ -191,7 +191,8 @@ func main() {
 
 	//db, err := mysql.Open("root@/CardsService?charset=utf8")
 	//db, err := mgo.Open("mongodb://127.0.0.1:27017")
-	db, err := neo.Open("http://neo4j:password@localhost:7474")
+	//db, err := neo.Open("http://neo4j:password@localhost:7474")
+	db, err := neo.Open("bolt://neo4j:password@localhost:7687")
 	if err != nil {
 		log.Fatal(err)
 	}

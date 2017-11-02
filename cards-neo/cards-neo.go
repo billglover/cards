@@ -1,36 +1,37 @@
 package cardsneo
 
 import (
-	"database/sql"
 	"errors"
 	"fmt"
+	"io"
 
 	cs "github.com/billglover/cards/cards-service"
 	"github.com/billglover/uid"
 
-	_ "gopkg.in/cq.v1"
+	bolt "github.com/johnnadratowski/golang-neo4j-bolt-driver"
 )
 
 type DB struct {
-	*sql.DB
+	bolt.Conn
 }
 type Tx struct {
-	*sql.DB
+	bolt.Conn
 }
 
 // Open returns a DB reference for a data source.
 func Open(dataSourceName string) (*DB, error) {
-	db, err := sql.Open("neo4j-cypher", dataSourceName)
+	driver := bolt.NewDriver()
+	conn, err := driver.OpenNeo(dataSourceName)
 	if err != nil {
 		return nil, err
 	}
 
-	return &DB{db}, nil
+	return &DB{conn}, nil
 }
 
 // Begin starts an returns a new transaction.
 func (db *DB) Begin() (*Tx, error) {
-	return &Tx{db.DB}, nil
+	return &Tx{db.Conn}, nil
 }
 
 // CreateCard creates a new card.
@@ -43,21 +44,38 @@ func (tx *Tx) CreateCard(c *cs.Card) (string, error) {
 		return "", errors.New("card.Title required")
 	}
 
-	stmt, err := tx.Prepare("CREATE (n:Card {uid: {0}, title:{1}}) RETURN n.uid")
+	stmt, err := tx.PrepareNeo("CREATE (n:Card {uid: {uid}, title:{title}}) RETURN n.uid, n.title")
 	if err != nil {
 		return "", err
 	}
 
 	uid, _ := uid.NextStringID()
-	row := stmt.QueryRow(uid, c.Title)
-
-	id := ""
-	err = row.Scan(&id)
+	data := map[string]interface{}{"uid": uid, "title": c.Title}
+	rows, err := stmt.QueryNeo(data)
 	if err != nil {
 		return "", err
 	}
 
-	return fmt.Sprintf("%s", id), err
+	// we only expect one row
+	row, _, err := rows.NextNeo()
+	if err != nil {
+		fmt.Println(err)
+		return "", err
+	}
+
+	_, _, err = rows.NextNeo()
+	if err != io.EOF {
+		fmt.Println(err)
+		return "", err
+	}
+
+	fmt.Println("---")
+
+	fmt.Printf("COLUMNS: %#v\n", rows.Metadata()["fields"].([]interface{}))
+	fmt.Printf("FIELDS: %s %s\n", row[0].(string), row[1].(string))
+	stmt.Close()
+
+	return row[0].(string), nil
 }
 
 // DeleteCard deletes a card based on its id.
@@ -70,17 +88,24 @@ func (tx *Tx) DeleteCard(c *cs.Card) (int64, error) {
 		return 0, errors.New("card.Id required")
 	}
 
-	stmt, err := tx.Prepare("MATCH (n:Card {uid: {0}}) DETACH DELETE n")
+	stmt, err := tx.PrepareNeo("MATCH (n:Card {uid: {uid}}) DETACH DELETE n")
 	if err != nil {
 		return 0, err
 	}
 
-	res, err := stmt.Exec(c.Id)
+	data := map[string]interface{}{"uid": c.Id}
+	result, err := stmt.ExecNeo(data)
+	stmt.Close()
 	if err != nil {
 		return 0, err
 	}
 
-	return res.RowsAffected()
+	numResult, err := result.RowsAffected()
+	if err != nil {
+		return 0, err
+	}
+
+	return numResult, nil
 }
 
 // EmbedCard embeds one card inside another.
