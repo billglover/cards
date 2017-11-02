@@ -105,6 +105,11 @@ func (tx *Tx) DeleteCard(c *cs.Card) (int64, error) {
 		return 0, err
 	}
 
+	// Neo4J returns rows for each relationship deleted as well
+	if numResult > 1 {
+		numResult = 1
+	}
+
 	return numResult, nil
 }
 
@@ -112,21 +117,30 @@ func (tx *Tx) DeleteCard(c *cs.Card) (int64, error) {
 // Returns the number of records ammended or an error if the tx fails.
 func (tx *Tx) EmbedCard(p, c *cs.Card) (int64, error) {
 
-	// if p == nil || c == nil {
-	// 	return 0, errors.New("parent and child cards required")
-	// } else if p.Id == "" || c.Id == "" {
-	// 	return 0, errors.New("parent.Id and child.Id are both required")
-	// }
+	if p == nil || c == nil {
+		return 0, errors.New("parent and child cards required")
+	} else if p.Id == "" || c.Id == "" {
+		return 0, errors.New("parent.Id and child.Id are both required")
+	}
 
-	// stmt, err := tx.Prepare("INSERT links SET parent=?, child=?")
-	// if err != nil {
-	// 	return 0, err
-	// }
+	stmt, err := tx.PrepareNeo("MATCH (p:Card {uid: {pid}}), (c:Card {uid: {cid}}) CREATE (p)-[:contains]->(c)")
+	if err != nil {
+		return 0, err
+	}
 
-	// res, err := stmt.Exec(p.Id, c.Id)
-	// return res.RowsAffected()
+	data := map[string]interface{}{"pid": p.Id, "cid": c.Id}
+	result, err := stmt.ExecNeo(data)
+	stmt.Close()
+	if err != nil {
+		return 0, err
+	}
 
-	return 0, nil
+	numResult, err := result.RowsAffected()
+	if err != nil {
+		return 0, err
+	}
+
+	return numResult, nil
 }
 
 // RemoveCard embeds one card inside another.
