@@ -46,7 +46,7 @@ func removeCard(p *cs.Pairing) error {
 	_, err = client.Remove(context.Background(), p)
 	if err != nil {
 		log.Printf("removing card: {%+v} %s\n", p, "FAILED")
-		log.Printf("removing to embed card: %v", grpc.ErrorDesc(err))
+		log.Printf("removing card: %v", grpc.ErrorDesc(err))
 		return nil
 	}
 	log.Printf("removing card: {%+v} %s\n", p, "SUCCESS")

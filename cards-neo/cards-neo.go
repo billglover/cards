@@ -69,10 +69,6 @@ func (tx *Tx) CreateCard(c *cs.Card) (string, error) {
 		return "", err
 	}
 
-	fmt.Println("---")
-
-	fmt.Printf("COLUMNS: %#v\n", rows.Metadata()["fields"].([]interface{}))
-	fmt.Printf("FIELDS: %s %s\n", row[0].(string), row[1].(string))
 	stmt.Close()
 
 	return row[0].(string), nil
@@ -95,10 +91,11 @@ func (tx *Tx) DeleteCard(c *cs.Card) (int64, error) {
 
 	data := map[string]interface{}{"uid": c.Id}
 	result, err := stmt.ExecNeo(data)
-	stmt.Close()
+
 	if err != nil {
 		return 0, err
 	}
+	stmt.Close()
 
 	numResult, err := result.RowsAffected()
 	if err != nil {
@@ -147,21 +144,32 @@ func (tx *Tx) EmbedCard(p, c *cs.Card) (int64, error) {
 // Returns the number of records ammended or an error if the tx fails.
 func (tx *Tx) RemoveCard(p, c *cs.Card) (int64, error) {
 
-	// if p == nil || c == nil {
-	// 	return 0, errors.New("parent and child cards required")
-	// } else if p.Id == "" || c.Id == "" {
-	// 	return 0, errors.New("parent.Id and child.Id are both required")
-	// }
+	// MATCH (p:Card)-[r:contains]->(c:Card) DELETE r;
 
-	// stmt, err := tx.Prepare("DELETE FROM links WHERE parent=? AND child=?")
-	// if err != nil {
-	// 	return 0, err
-	// }
+	if p == nil || c == nil {
+		return 0, errors.New("parent and child cards required")
+	} else if p.Id == "" || c.Id == "" {
+		return 0, errors.New("parent.Id and child.Id are both required")
+	}
 
-	// res, err := stmt.Exec(p.Id, c.Id)
-	// return res.RowsAffected()
+	stmt, err := tx.PrepareNeo("MATCH (p:Card {uid: {pid}})-[r:contains]->(c:Card {uid: {cid}}) DELETE (r)")
+	if err != nil {
+		return 0, err
+	}
 
-	return 0, nil
+	data := map[string]interface{}{"pid": p.Id, "cid": c.Id}
+	result, err := stmt.ExecNeo(data)
+	if err != nil {
+		return 0, err
+	}
+
+	numResult, err := result.RowsAffected()
+	if err != nil {
+		return 0, fmt.Errorf("unable to delete relationship %s->%s", p.Id, c.Id)
+	}
+
+	stmt.Close()
+	return numResult, nil
 }
 
 // GetCard returns a card based on its identifier.
