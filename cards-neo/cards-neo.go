@@ -48,6 +48,7 @@ func (tx *Tx) CreateCard(c *cs.Card) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	defer stmt.Close()
 
 	uid, _ := uid.NextStringID()
 	data := map[string]interface{}{"uid": uid, "title": c.Title}
@@ -69,8 +70,6 @@ func (tx *Tx) CreateCard(c *cs.Card) (string, error) {
 		return "", err
 	}
 
-	stmt.Close()
-
 	return row[0].(string), nil
 }
 
@@ -88,6 +87,7 @@ func (tx *Tx) DeleteCard(c *cs.Card) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
+	defer stmt.Close()
 
 	data := map[string]interface{}{"uid": c.Id}
 	result, err := stmt.ExecNeo(data)
@@ -95,7 +95,6 @@ func (tx *Tx) DeleteCard(c *cs.Card) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
-	stmt.Close()
 
 	numResult, err := result.RowsAffected()
 	if err != nil {
@@ -124,10 +123,10 @@ func (tx *Tx) EmbedCard(p, c *cs.Card) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
+	defer stmt.Close()
 
 	data := map[string]interface{}{"pid": p.Id, "cid": c.Id}
 	result, err := stmt.ExecNeo(data)
-	stmt.Close()
 	if err != nil {
 		return 0, err
 	}
@@ -156,6 +155,7 @@ func (tx *Tx) RemoveCard(p, c *cs.Card) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
+	defer stmt.Close()
 
 	data := map[string]interface{}{"pid": p.Id, "cid": c.Id}
 	result, err := stmt.ExecNeo(data)
@@ -168,7 +168,6 @@ func (tx *Tx) RemoveCard(p, c *cs.Card) (int64, error) {
 		return 0, fmt.Errorf("unable to delete relationship %s->%s", p.Id, c.Id)
 	}
 
-	stmt.Close()
 	return numResult, nil
 }
 
