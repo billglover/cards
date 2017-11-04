@@ -4,6 +4,13 @@ A collection of cards and stacks
 
 ## Development notes
 
+This project is a proof of concept to assess the merits of using MySQL, MongoDB or Neo4J to store a simple hierarchical relationship between objects, in this case cards.
+
+We start with a simple premise. Each card has a unique identifier and a title. It can contain zero or more other cards.
+
+The project provides a simple command line interface to a Cards Service that allows cards to be manipulated. The Cards Service can be configured to use one of the three databases as its data store. The Cards Service is exposed over gRPC and a protobuf definition of the service has been provided to allow clients to be generated.
+
+
 ### gRPC
 
 ```plain
