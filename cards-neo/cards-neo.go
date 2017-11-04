@@ -140,10 +140,8 @@ func (tx *Tx) EmbedCard(p, c *cs.Card) (int64, error) {
 }
 
 // RemoveCard embeds one card inside another.
-// Returns the number of records ammended or an error if the tx fails.
+// Returns the number of records amended or an error if the tx fails.
 func (tx *Tx) RemoveCard(p, c *cs.Card) (int64, error) {
-
-	// MATCH (p:Card)-[r:contains]->(c:Card) DELETE r;
 
 	if p == nil || c == nil {
 		return 0, errors.New("parent and child cards required")
