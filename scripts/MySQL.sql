@@ -1,7 +1,7 @@
 DROP TABLE IF EXISTS `cards`;
 
 CREATE TABLE `cards` (
-   `uid` SERIAL,
+   `uid` VARCHAR(24) NOT NULL,
    `title` VARCHAR(64) NULL DEFAULT NULL,
    PRIMARY KEY (`uid`)
 );
@@ -9,8 +9,7 @@ CREATE TABLE `cards` (
 DROP TABLE IF EXISTS `links`;
 
 CREATE TABLE `links` (
-   `uid` SERIAL,
-   `parent` BIGINT UNSIGNED NOT NULL,
-   `child` BIGINT UNSIGNED NOT NULL,
-   PRIMARY KEY (`uid`)
+   `parent` VARCHAR(24) NOT NULL,
+   `child` VARCHAR(24) NOT NULL,
+   PRIMARY KEY (`parent`, `child`)
 );

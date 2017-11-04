@@ -3,9 +3,9 @@ package cardsmysql
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 
 	cs "github.com/billglover/cards/cards-service"
+	"github.com/billglover/uid"
 
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -45,18 +45,18 @@ func (tx *Tx) CreateCard(c *cs.Card) (string, error) {
 		return "", errors.New("card.Title required")
 	}
 
-	stmt, err := tx.Prepare("INSERT cards SET title=?")
+	stmt, err := tx.Prepare("INSERT cards SET uid=?, title=?")
 	if err != nil {
 		return "", err
 	}
 
-	res, err := stmt.Exec(c.Title)
+	id, _ := uid.NextStringID()
+	_, err = stmt.Exec(id, c.Title)
 	if err != nil {
 		return "", err
 	}
 
-	id, err := res.LastInsertId()
-	return fmt.Sprintf("%d", id), err
+	return id, err
 }
 
 // DeleteCard deletes a card based on its id.
@@ -133,13 +133,13 @@ func (tx *Tx) GetCard(c *cs.Card) (*cs.Card, error) {
 
 	row := stmt.QueryRow(c.Id)
 
-	var uid int
+	var uid string
 	var title string
 	err = row.Scan(&uid, &title)
 	if err != nil {
 		return c, err
 	}
-	c.Id = fmt.Sprintf("%d", uid)
+	c.Id = uid
 	c.Title = title
 
 	stmt, err = tx.Prepare("SELECT child FROM links WHERE parent=?")
@@ -154,7 +154,7 @@ func (tx *Tx) GetCard(c *cs.Card) (*cs.Card, error) {
 
 	for rows.Next() {
 		rows.Scan(&uid)
-		c.Cards = append(c.Cards, &cs.Card{Id: fmt.Sprintf("%d", uid)})
+		c.Cards = append(c.Cards, &cs.Card{Id: uid})
 	}
 	rows.Close()
 

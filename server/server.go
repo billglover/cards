@@ -7,8 +7,8 @@ import (
 
 	"golang.org/x/net/context"
 
-	neo "github.com/billglover/cards/cards-neo"
-	//mysql "github.com/billglover/cards/cards-mysql"
+	mysql "github.com/billglover/cards/cards-mysql"
+	//neo "github.com/billglover/cards/cards-neo"
 	//mgo "github.com/billglover/cards/cards-mgo"
 	cs "github.com/billglover/cards/cards-service"
 
@@ -20,7 +20,7 @@ import (
 // databases used to store cards and decks.
 // TODO: use an interface here
 type csServer struct {
-	db *neo.DB
+	db *mysql.DB
 }
 
 // Create creates an instance of a card in the database. It returns the
@@ -189,10 +189,9 @@ func main() {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
-	//db, err := mysql.Open("root@/CardsService?charset=utf8")
+	db, err := mysql.Open("root@/CardsService?charset=utf8")
 	//db, err := mgo.Open("mongodb://127.0.0.1:27017")
-	//db, err := neo.Open("http://neo4j:password@localhost:7474")
-	db, err := neo.Open("bolt://neo4j:password@localhost:7687")
+	//db, err := neo.Open("bolt://neo4j:password@localhost:7687")
 	if err != nil {
 		log.Fatal(err)
 	}
