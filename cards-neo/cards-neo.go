@@ -5,15 +5,21 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/johnnadratowski/golang-neo4j-bolt-driver/structures/graph"
+
 	cs "github.com/billglover/cards/cards-service"
 	"github.com/billglover/uid"
 
 	bolt "github.com/johnnadratowski/golang-neo4j-bolt-driver"
 )
 
+// DB holds a reference to the datbase.
 type DB struct {
 	bolt.Conn
 }
+
+// Tx holds a reference to the transaction.
+// With Neo4J this is unused.
 type Tx struct {
 	bolt.Conn
 }
@@ -173,51 +179,85 @@ func (tx *Tx) RemoveCard(p, c *cs.Card) (int64, error) {
 // Returns the card or an error if the tx fails.
 func (tx *Tx) GetCard(c *cs.Card) (*cs.Card, error) {
 
-	// if c == nil {
-	// 	return c, errors.New("card required")
-	// } else if c.Id == "" {
-	// 	return c, errors.New("card.Id required")
-	// }
+	if c == nil {
+		return c, errors.New("card required")
+	} else if c.Id == "" {
+		return c, errors.New("card.Id required")
+	}
 
-	// stmt, err := tx.Prepare("SELECT uid, title FROM cards WHERE uid=?")
-	// if err != nil {
-	// 	return c, err
-	// }
+	stmt, err := tx.PrepareNeo("MATCH (p:Card {uid: {uid}})-[r:contains]->(c:Card) RETURN {parent:p, children: [collect(c)]};")
+	if err != nil {
+		return nil, err
+	}
+	defer stmt.Close()
 
-	// row := stmt.QueryRow(c.Id)
+	data := map[string]interface{}{"uid": c.Id}
+	rows, err := stmt.QueryNeo(data)
+	if err != nil {
+		return nil, err
+	}
 
-	// var uid int
-	// var title string
-	// err = row.Scan(&uid, &title)
-	// if err != nil {
-	// 	return c, err
-	// }
-	// c.Id = fmt.Sprintf("%d", uid)
-	// c.Title = title
+	// we only expect one row
+	row, _, err := rows.NextNeo()
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
 
-	// stmt, err = tx.Prepare("SELECT child FROM links WHERE parent=?")
-	// if err != nil {
-	// 	return c, err
-	// }
+	_, _, err = rows.NextNeo()
+	if err != io.EOF {
+		fmt.Println(err)
+		return nil, err
+	}
 
-	// rows, err := stmt.Query(c.Id)
-	// if err != nil {
-	// 	return c, err
-	// }
+	r, ok := row[0].(map[string]interface{})
+	if ok != true {
+		return nil, fmt.Errorf("unable to parse response from database")
+	}
 
-	// for rows.Next() {
-	// 	rows.Scan(&uid)
-	// 	c.Cards = append(c.Cards, &cs.Card{Id: fmt.Sprintf("%d", uid)})
-	// }
-	// rows.Close()
+	parent, ok := r["parent"].(graph.Node)
+	if ok != true {
+		return nil, fmt.Errorf("unable to parse parent card in database response")
+	}
+
+	c.Id = parent.Properties["uid"].(string)
+	c.Title = parent.Properties["title"].(string)
+
+	children, ok := r["children"].([]interface{})
+	if ok != true {
+		return nil, fmt.Errorf("unable to parse parent card in database response")
+	}
+
+	// The data structure returned by the database is a nested array
+	// requiring us to unwrap this twice.
+	children, ok = children[0].([]interface{})
+	if ok != true {
+		return nil, fmt.Errorf("unable to parse parent card in database response")
+	}
+
+	for _, v := range children {
+		child := v.(graph.Node)
+
+		embeddedCard := cs.Card{
+			Id:    child.Properties["uid"].(string),
+			Title: child.Properties["title"].(string),
+		}
+
+		c.Cards = append(c.Cards, &embeddedCard)
+
+	}
 
 	return c, nil
 }
 
+// Commit is an empty function as the Neo4J driver doesn't handle
+// transactions in a way that we can use.
 func (tx *Tx) Commit() error {
 	return nil
 }
 
+// Rollback is an empty function as the Neo4J driver doesn't handle
+// transactions in a way that we can use.
 func (tx *Tx) Rollback() error {
 	return nil
 }
